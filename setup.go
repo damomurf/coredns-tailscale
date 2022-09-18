@@ -16,6 +16,7 @@ func setup(c *caddy.Controller) error {
 	c.Next() // Ignore "tailscale" and give us the next token.
 	if c.NextArg() {
 		zone = c.Val()
+		c.Next() // Give us the next token.
 	}
 	if c.NextArg() {
 		return plugin.Error("tailscale", c.ArgErr())
