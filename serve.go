@@ -27,36 +27,25 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 	case dns.TypeA:
 		log.Debug("Handling A record lookup")
 		msg.Authoritative = true
-		entries, ok := t.entries[name]
+		entry, ok := t.entries[name]["A"]
 		if ok {
 			log.Debug("Found an v4 entry after lookup")
-			for _, addr := range entries {
-				if addr.Is4() {
-					msg.Answer = append(msg.Answer, &dns.A{
-						Hdr: dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
-						A:   net.ParseIP(addr.String()),
-					})
-
-				}
-			}
-
+			msg.Answer = append(msg.Answer, &dns.A{
+				Hdr: dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+				A:   net.ParseIP(entry),
+			})
 		}
+
 	case dns.TypeAAAA:
 		log.Debug("Handling AAAA record lookup")
 		msg.Authoritative = true
-		entries, ok := t.entries[name]
+		entry, ok := t.entries[name]["AAAA"]
 		if ok {
 			log.Debug("Found a v6  entry after lookup")
-			for _, addr := range entries {
-				if addr.Is6() {
-					msg.Answer = append(msg.Answer, &dns.AAAA{
-						Hdr:  dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60},
-						AAAA: net.ParseIP(addr.String()),
-					})
-
-				}
-			}
-
+			msg.Answer = append(msg.Answer, &dns.AAAA{
+				Hdr:  dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60},
+				AAAA: net.ParseIP(entry),
+			})
 		}
 
 	}

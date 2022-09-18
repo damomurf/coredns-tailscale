@@ -2,7 +2,6 @@ package tailscale
 
 import (
 	"context"
-	"net/netip"
 	"strings"
 
 	"github.com/coredns/coredns/plugin"
@@ -13,7 +12,7 @@ import (
 type Tailscale struct {
 	Next     plugin.Handler
 	tsClient tailscale.LocalClient
-	entries  map[string][]netip.Addr
+	entries  map[string]map[string]string
 }
 
 func NewTailscale(next plugin.Handler) *Tailscale {
@@ -26,7 +25,7 @@ func NewTailscale(next plugin.Handler) *Tailscale {
 func (t *Tailscale) Name() string { return "tailscale" }
 
 func (t *Tailscale) pollPeers() {
-	t.entries = map[string][]netip.Addr{}
+	t.entries = map[string]map[string]string{}
 
 	res, err := t.tsClient.Status(context.Background())
 	if err != nil {
@@ -34,7 +33,15 @@ func (t *Tailscale) pollPeers() {
 	}
 	for _, v := range res.Peer {
 		for _, addr := range v.TailscaleIPs {
-			t.entries[strings.ToLower(v.HostName)] = append(t.entries[strings.ToLower(v.HostName)], addr)
+			_, ok := t.entries[strings.ToLower(v.HostName)]
+			if !ok {
+				t.entries[strings.ToLower(v.HostName)] = map[string]string{}
+			}
+			if addr.Is4() {
+				t.entries[strings.ToLower(v.HostName)]["A"] = addr.String()
+			} else if addr.Is6() {
+				t.entries[strings.ToLower(v.HostName)]["AAAA"] = addr.String()
+			}
 		}
 	}
 }
