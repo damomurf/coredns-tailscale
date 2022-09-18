@@ -41,10 +41,22 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 		msg.Authoritative = true
 		entry, ok := t.entries[name]["AAAA"]
 		if ok {
-			log.Debug("Found a v6  entry after lookup")
+			log.Debug("Found a v6 entry after lookup")
 			msg.Answer = append(msg.Answer, &dns.AAAA{
 				Hdr:  dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60},
 				AAAA: net.ParseIP(entry),
+			})
+		}
+
+	case dns.TypeCNAME:
+		log.Debug("Handling CNAME record lookup")
+		msg.Authoritative = true
+		entry, ok := t.entries[name]["CNAME"]
+		if ok {
+			log.Debug("Found a CNAME entry after lookup")
+			msg.Answer = append(msg.Answer, &dns.CNAME{
+				Hdr:    dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 60},
+				Target: entry,
 			})
 		}
 
