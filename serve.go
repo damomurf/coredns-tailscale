@@ -9,12 +9,12 @@ import (
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 )
 
-var log = clog.NewWithPlugin("example")
+var log = clog.NewWithPlugin("tailscale")
 
 // ServeDNS implements the plugin.Handler interface. This method gets called when example is used
 // in a Server.
 func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	log.Debugf("Received request: %v", r)
+	clog.Debugf("Received request for name: %v", r.Question[0].Name)
 
 	msg := dns.Msg{}
 	msg.SetReply(r)
