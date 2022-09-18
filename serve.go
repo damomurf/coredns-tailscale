@@ -14,7 +14,7 @@ var log = clog.NewWithPlugin("tailscale")
 // ServeDNS implements the plugin.Handler interface. This method gets called when example is used
 // in a Server.
 func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	clog.Debugf("Received request for name: %v", r.Question[0].Name)
+	log.Debugf("Received request for name: %v", r.Question[0].Name)
 
 	msg := dns.Msg{}
 	msg.SetReply(r)
