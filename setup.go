@@ -13,19 +13,22 @@ func init() { plugin.Register("tailscale", setup) }
 // for parsing any extra options the example plugin may have. The first token this function sees is "example".
 func setup(c *caddy.Controller) error {
 	var zone string
-	if c.NextArg() { // Ignore "tailscale" and give us the next token.
+	c.Next() // Ignore "tailscale" and give us the next token.
+	if c.NextArg() {
 		zone = c.Val()
-		c.Next() // Give us the next token.
+		c.Next()
 	}
-	// if c.NextArg() {
-	// 	return plugin.Error("tailscale", c.ArgErr())
-	// }
+	if c.NextArg() {
+		return plugin.Error("tailscale", c.ArgErr())
+	}
 
 	// Add the Plugin to CoreDNS, so Servers can use it in their plugin chain.
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
-		ts := &Tailscale{Next: next}
+		ts := &Tailscale{
+			Next: next,
+			zone: zone,
+		}
 		ts.pollPeers()
-		ts.zone = zone
 		return ts
 	})
 
