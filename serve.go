@@ -16,6 +16,7 @@ var log = clog.NewWithPlugin("tailscale")
 // in a Server.
 func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	log.Debugf("Received request for name: %v", r.Question[0].Name)
+	log.Debugf("Tailscale peers list has %d entries", len(t.entries))
 
 	msg := dns.Msg{}
 	msg.SetReply(r)
@@ -24,9 +25,11 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 	switch r.Question[0].Qtype {
 	case dns.TypeA:
+		log.Debug("Handling A record lookup")
 		msg.Authoritative = true
 		entries, ok := t.entries[name]
 		if ok {
+			log.Debug("Found an v4 entry after lookup")
 			for _, addr := range entries {
 				if addr.Is4() {
 					msg.Answer = append(msg.Answer, &dns.A{
@@ -39,9 +42,11 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 		}
 	case dns.TypeAAAA:
+		log.Debug("Handling AAAA record lookup")
 		msg.Authoritative = true
 		entries, ok := t.entries[name]
 		if ok {
+			log.Debug("Found a v6  entry after lookup")
 			for _, addr := range entries {
 				if addr.Is6() {
 					msg.Answer = append(msg.Answer, &dns.AAAA{
@@ -55,6 +60,7 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 		}
 
 	}
+	log.Debugf("Writing response: %+v", msg)
 	w.WriteMsg(&msg)
 
 	// Export metric with the server label set to the current server handling the request.
