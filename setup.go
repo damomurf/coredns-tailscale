@@ -22,7 +22,9 @@ func setup(c *caddy.Controller) error {
 
 	// Add the Plugin to CoreDNS, so Servers can use it in their plugin chain.
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
-		return &Tailscale{Next: next}
+		ts := &Tailscale{Next: next}
+		ts.pollPeers()
+		return ts
 	})
 
 	// All OK, return a nil error.
