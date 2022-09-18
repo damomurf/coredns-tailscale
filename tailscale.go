@@ -26,6 +26,7 @@ func NewTailscale(next plugin.Handler) *Tailscale {
 func (t *Tailscale) Name() string { return "tailscale" }
 
 func (t *Tailscale) pollPeers() {
+	log.Info("Loading Tailscale peers...")
 	t.entries = map[string][]netip.Addr{}
 
 	res, err := t.tsClient.Status(context.Background())

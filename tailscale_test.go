@@ -10,10 +10,9 @@ import (
 	"github.com/miekg/dns"
 )
 
-func TestExample(t *testing.T) {
-	// Create a new Example Plugin. Use the test.ErrorHandler as the next plugin.
+func TestTailscale(t *testing.T) {
+	// Create a new Tailscale Plugin. Use the test.ErrorHandler as the next plugin.
 	ts := Tailscale{Next: test.ErrorHandler()}
-
 	ts.pollPeers()
 
 	ctx := context.TODO()
