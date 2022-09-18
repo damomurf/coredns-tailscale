@@ -3,6 +3,7 @@ package tailscale
 import (
 	"context"
 	"net"
+	"strings"
 
 	"github.com/miekg/dns"
 
@@ -19,10 +20,12 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 	msg := dns.Msg{}
 	msg.SetReply(r)
 
+	name := strings.Split(r.Question[0].Name, ".")[0]
+
 	switch r.Question[0].Qtype {
 	case dns.TypeA:
 		msg.Authoritative = true
-		entries, ok := t.entries[msg.Question[0].Name]
+		entries, ok := t.entries[name]
 		if ok {
 			for _, addr := range entries {
 				if addr.Is4() {
@@ -37,7 +40,7 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 		}
 	case dns.TypeAAAA:
 		msg.Authoritative = true
-		entries, ok := t.entries[msg.Question[0].Name]
+		entries, ok := t.entries[name]
 		if ok {
 			for _, addr := range entries {
 				if addr.Is6() {
