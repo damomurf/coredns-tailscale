@@ -1,6 +1,8 @@
 package tailscale
 
 import (
+	"time"
+
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
@@ -29,6 +31,11 @@ func setup(c *caddy.Controller) error {
 			zone: zone,
 		}
 		ts.pollPeers()
+		go func() {
+			for range time.Tick(1 * time.Minute) {
+				ts.pollPeers()
+			}
+		}()
 		return ts
 	})
 

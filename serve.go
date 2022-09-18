@@ -50,7 +50,7 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 	case dns.TypeCNAME:
 		log.Debug("Handling CNAME record lookup")
-		msg.Authoritative = true
+		msg.Authoritative = false
 		entry, ok := t.entries[name]["CNAME"]
 		if ok {
 			log.Debug("Found a CNAME entry after lookup")
