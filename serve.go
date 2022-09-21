@@ -12,6 +12,12 @@ import (
 
 var log = clog.NewWithPlugin("tailscale")
 
+const (
+	TypeAll = iota
+	TypeA
+	TypeAAAA
+)
+
 // ServeDNS implements the plugin.Handler interface. This method gets called when tailscale is used
 // in a Server.
 
@@ -28,7 +34,7 @@ func (t *Tailscale) resolveA(domainName string, msg *dns.Msg) {
 	} else {
 		// There's no A record, so see if a CNAME exists
 		log.Debug("No v4 entry after lookup, so trying CNAME")
-		t.resolveCNAME(entry, msg)
+		t.resolveCNAME(domainName, msg, TypeA)
 	}
 
 }
@@ -46,12 +52,12 @@ func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 	} else {
 		// There's no AAAA record, so see if a CNAME exists
 		log.Debug("No v6 entry after lookup, so trying CNAME")
-		t.resolveCNAME(entry, msg)
+		t.resolveCNAME(domainName, msg, TypeAAAA)
 	}
 
 }
 
-func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg) {
+func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg, lookupType int) {
 
 	name := strings.Split(domainName, ".")[0]
 	target, ok := t.entries[name]["CNAME"]
@@ -63,8 +69,12 @@ func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg) {
 		})
 
 		// Resolve local zone A or AAAA records if they exist for the referenced target
-		t.resolveA(target, msg)
-		t.resolveAAAA(target, msg)
+		if lookupType == TypeAll || lookupType == TypeA {
+			t.resolveA(target, msg)
+		}
+		if lookupType == TypeAll || lookupType == TypeAAAA {
+			t.resolveAAAA(target, msg)
+		}
 	}
 
 }
@@ -89,7 +99,7 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 	case dns.TypeCNAME:
 		log.Debug("Handling CNAME record lookup")
-		t.resolveCNAME(r.Question[0].Name, &msg)
+		t.resolveCNAME(r.Question[0].Name, &msg, TypeAll)
 
 	}
 
