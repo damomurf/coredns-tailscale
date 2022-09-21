@@ -25,6 +25,10 @@ func (t *Tailscale) resolveA(domainName string, msg *dns.Msg) {
 			Hdr: dns.RR_Header{Name: domainName, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
 			A:   net.ParseIP(entry),
 		})
+	} else {
+		// There's no A record, so see if a CNAME exists
+		log.Debug("No v4 entry after lookup, so trying CNAME")
+		t.resolveCNAME(entry, msg)
 	}
 
 }
@@ -39,6 +43,10 @@ func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 			Hdr:  dns.RR_Header{Name: domainName, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60},
 			AAAA: net.ParseIP(entry),
 		})
+	} else {
+		// There's no AAAA record, so see if a CNAME exists
+		log.Debug("No v6 entry after lookup, so trying CNAME")
+		t.resolveCNAME(entry, msg)
 	}
 
 }
@@ -46,17 +54,17 @@ func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg) {
 
 	name := strings.Split(domainName, ".")[0]
-	entry, ok := t.entries[name]["CNAME"]
+	target, ok := t.entries[name]["CNAME"]
 	if ok {
 		log.Debug("Found a CNAME entry after lookup")
 		msg.Answer = append(msg.Answer, &dns.CNAME{
 			Hdr:    dns.RR_Header{Name: domainName, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 60},
-			Target: entry,
+			Target: target,
 		})
 
 		// Resolve local zone A or AAAA records if they exist for the referenced target
-		t.resolveA(entry, msg)
-		t.resolveAAAA(entry, msg)
+		t.resolveA(target, msg)
+		t.resolveAAAA(target, msg)
 	}
 
 }
