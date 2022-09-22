@@ -8,6 +8,7 @@ import (
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/test"
 	"tailscale.com/client/tailscale"
+	"tailscale.com/ipn/ipnstate"
 )
 
 type Tailscale struct {
@@ -34,7 +35,15 @@ func (t *Tailscale) pollPeers() {
 		log.Fatal(err)
 	}
 
-	for _, v := range res.Peer {
+	// Add self to list of considered hosts
+	hosts := []*ipnstate.PeerStatus{res.Self}
+
+	// Add all peers to considered host list
+	for _, status := range res.Peer {
+		hosts = append(hosts, status)
+	}
+
+	for _, v := range hosts {
 
 		// Process IPs for A and AAAA records
 		for _, addr := range v.TailscaleIPs {
@@ -64,4 +73,7 @@ func (t *Tailscale) pollPeers() {
 			}
 		}
 	}
+
+	// Add self
+
 }
