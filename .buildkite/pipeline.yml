@@ -1,16 +1,15 @@
 steps:
 
-  - label: ":build: Build"
-    command: "go build ."
-    plugins:
-      - docker#v5.1.0:
-          image: "golang:1.19"
-
-  - label: ":test: Test"
+  - label: ":hammer: Test"
     command: "go test -v"
     plugins:
       - docker#v5.1.0:
           image: "golang:1.19"
  
-  - label: ":image: Image"
-    command: docker build -t ghcr.io/damomurf/coredns-tailscale .
+  - label: ":stamp: Image"
+    command: docker build -t ghcr.io/damomurf/coredns-tailscale:$BUILDKITE_TAG .
+    if: build.branch == "main" && build.tag != null
+
+  - label: ":ship: Push"
+    command: docker push ghcr.io/damomurf/coredns-tailscale:$BUILDKITE_TAG .
+    if: build.branch == "main" && build.tag != null
