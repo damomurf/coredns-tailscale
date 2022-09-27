@@ -1,2 +1,15 @@
 steps:
+  - command: go test -v
+    plugins:
+
+  - command: "go build ."
+      plugins:
+	- docker#v5.1.0:
+	    image: "golang:1.19"
+
+  - command: "go test -v"
+      plugins:
+	- docker#v5.1.0:
+	    image: "golang:1.19"
+      
   - command: docker build -t ghcr.io/damomurf/coredns-tailscale .
