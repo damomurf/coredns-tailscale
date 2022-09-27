@@ -7,7 +7,7 @@ steps:
           image: "golang:1.19"
 
   - label: ":test: Test"
-     command: "go test -v"
+    command: "go test -v"
     plugins:
       - docker#v5.1.0:
           image: "golang:1.19"
