@@ -7,9 +7,9 @@ RUN apk add git make && \
 
 COPY . /go/src/coredns/plugin/coredns-tailscale
 
-    # git clone https://github.com/damomurf/coredns-tailscale tailscale && \
 RUN cd plugin && \
-    sed -i s/forward:forward/tailscale:github.com\\/damomurf\\/coredns-tailscale\\nforward:forward/ /go/src/coredns/plugin.cfg && \
+    rm go.mod go.sum &&  \
+    sed -i s/forward:forward/tailscale:tailscale\\nforward:forward/ /go/src/coredns/plugin.cfg && \
     cat /go/src/coredns/plugin.cfg && \
     cd .. && \
     make check && \
@@ -22,3 +22,4 @@ COPY --from=build /go/src/coredns/coredns /
 COPY Corefile run.sh /
 
 ENTRYPOINT ["/run.sh"]
+
