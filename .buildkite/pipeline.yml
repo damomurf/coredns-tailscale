@@ -1,0 +1,2 @@
+steps:
+  - command: docker build -t ghcr.io/damomurf/coredns-tailscale .

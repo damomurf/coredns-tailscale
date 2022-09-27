@@ -5,11 +5,13 @@ WORKDIR /go/src/coredns
 RUN apk add git make && \
     git clone --depth 1 --branch=v1.9.4 https://github.com/coredns/coredns /go/src/coredns && cd plugin
 
-COPY . /go/src/coredns/plugin/coredns-tailscale
+COPY . /go/src/coredns/plugin/tailscale
 
     # git clone https://github.com/damomurf/coredns-tailscale tailscale && \
 RUN cd plugin && \
-    sed -i s/forward:forward/tailscale:github.com\\/damomurf\\/coredns-tailscale\\nforward:forward/ /go/src/coredns/plugin.cfg && \
+    rm tailscale/go.mod && \
+    rm tailscale/go.sum && \
+    sed -i s/forward:forward/tailscale:tailscale\\nforward:forward/ /go/src/coredns/plugin.cfg && \
     cat /go/src/coredns/plugin.cfg && \
     cd .. && \
     make check && \
