@@ -34,7 +34,7 @@ func (t *Tailscale) pollPeers() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Debug("Self tags: %+v", res.Self.Tags)
+	log.Debugf("Self tags: %+v", res.Self.Tags)
 
 	// Add self to list of considered hosts
 	hosts := []*ipnstate.PeerStatus{res.Self}
