@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/coredns/caddy v1.1.1
-	github.com/coredns/coredns v1.9.4
+	github.com/coredns/coredns v1.10.0
 	github.com/miekg/dns v1.1.50
 	tailscale.com v1.32.2
 )
@@ -33,6 +33,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go4.org/mem v0.0.0-20210711025021-927187094b94 // indirect
 	go4.org/netipx v0.0.0-20220725152314-7e7bdc8411bf // indirect
