@@ -7,6 +7,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 )
 
@@ -105,13 +106,15 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 	}
 
-	log.Debugf("Writing response: %+v", msg)
-	w.WriteMsg(&msg)
+	if len(msg.Answer) > 0 {
+		log.Debugf("Writing response: %+v", msg)
+		w.WriteMsg(&msg)
+		return dns.RcodeSuccess, nil
+	}
 
 	// Export metric with the server label set to the current server handling the request.
 	//requestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
 
 	// Call next plugin (if any).
-	//return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
-	return 0, nil
+	return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
 }
