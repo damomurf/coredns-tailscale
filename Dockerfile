@@ -3,7 +3,7 @@ FROM golang:1.19-alpine AS build
 WORKDIR /go/src/coredns
 
 RUN apk add git make && \
-    git clone --depth 1 --branch=v1.9.4 https://github.com/coredns/coredns /go/src/coredns && cd plugin
+    git clone --depth 1 --branch=v1.10.0 https://github.com/coredns/coredns /go/src/coredns && cd plugin
 
 COPY . /go/src/coredns/plugin/tailscale
 
