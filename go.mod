@@ -6,7 +6,7 @@ require (
 	github.com/coredns/caddy v1.1.1
 	github.com/coredns/coredns v1.10.0
 	github.com/miekg/dns v1.1.50
-	tailscale.com v1.34.1
+	tailscale.com v1.34.2
 )
 
 require (
@@ -42,7 +42,7 @@ require (
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/sys v0.3.1-0.20221220025402-2204b6615fb8 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
