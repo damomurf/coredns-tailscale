@@ -6,7 +6,7 @@ require (
 	github.com/coredns/caddy v1.1.1
 	github.com/coredns/coredns v1.10.1
 	github.com/miekg/dns v1.1.53
-	tailscale.com v1.38.3
+	tailscale.com v1.38.4
 )
 
 require (
