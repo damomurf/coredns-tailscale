@@ -3,6 +3,8 @@ package tailscale
 import (
 	"context"
 	"net"
+	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/coredns/coredns/plugin"
@@ -13,13 +15,21 @@ import (
 
 var ts = Tailscale{
 	zone: "example.com",
-	entries: map[string]map[string]string{
+	entries: map[string]map[string][]string{
 		"test1": {
-			"A":    "127.0.0.1",
-			"AAAA": "::1",
+			"A":    []string{"127.0.0.1"},
+			"AAAA": []string{"::1"},
+		},
+		"test2-1": {
+			"A":    []string{"127.0.0.1"},
+			"AAAA": []string{"::1"},
+		},
+		"test2-2": {
+			"A":    []string{"127.0.0.1"},
+			"AAAA": []string{"::1"},
 		},
 		"test2": {
-			"CNAME": "test1.example.com",
+			"CNAME": []string{"test2-1.example.com", "test2-2.example.com"},
 		},
 	},
 }
@@ -123,21 +133,32 @@ func TestResolveCNAME(t *testing.T) {
 
 	ts.resolveCNAME(domain, &msg, TypeAll)
 
-	testEquals(t, "answer count", 3, len(msg.Answer))
+	testEquals(t, "answer count", 6, len(msg.Answer))
 
+	var cnames []string
+	var as []string
+	var aaaas []string
 	for _, rr := range msg.Answer {
+
 		switch rec := rr.(type) {
+
 		case *dns.CNAME:
-			testEquals(t, "CNAME record", "test1.example.com", rec.Target)
+			cnames = append(cnames, rec.Target)
 
 		case *dns.A:
-			testEquals(t, "A record", "127.0.0.1", rec.A.String())
+			as = append(as, rec.A.String())
 
 		case *dns.AAAA:
-			testEquals(t, "AAAA record", "::1", rec.AAAA.String())
+			aaaas = append(aaaas, rec.AAAA.String())
 		}
 
 	}
+
+	sort.Strings(cnames)
+	sort.Strings(as)
+	testEquals(t, "CNAME record", []string{"test2-1.example.com", "test2-2.example.com"}, cnames)
+	testEquals(t, "A record", []string{"127.0.0.1", "127.0.0.1"}, as)
+	testEquals(t, "AAAA record", []string{"::1", "::1"}, aaaas)
 
 }
 
@@ -148,22 +169,28 @@ func TestResolveAIsCNAME(t *testing.T) {
 
 	ts.resolveA(domain, &msg)
 
-	testEquals(t, "answer count", 2, len(msg.Answer))
+	testEquals(t, "answer count", 4, len(msg.Answer))
 
+	var cnames []string
+	var as []string
 	for _, rr := range msg.Answer {
 
 		switch rec := rr.(type) {
 
 		case *dns.CNAME:
-			testEquals(t, "CNAME record", "test1.example.com", rec.Target)
+			cnames = append(cnames, rec.Target)
 
 		case *dns.A:
-			testEquals(t, "A record", "127.0.0.1", rec.A.String())
+			as = append(as, rec.A.String())
 
 		}
 
 	}
 
+	sort.Strings(cnames)
+	sort.Strings(as)
+	testEquals(t, "CNAME record", []string{"test2-1.example.com", "test2-2.example.com"}, cnames)
+	testEquals(t, "A record", []string{"127.0.0.1", "127.0.0.1"}, as)
 }
 
 func TestResolveAAAAIsCNAME(t *testing.T) {
@@ -171,29 +198,35 @@ func TestResolveAAAAIsCNAME(t *testing.T) {
 	msg := dns.Msg{}
 	domain := "test2.example.com"
 
-	ts.resolveA(domain, &msg)
+	ts.resolveAAAA(domain, &msg)
 
-	testEquals(t, "answer count", 2, len(msg.Answer))
+	testEquals(t, "answer count", 4, len(msg.Answer))
 
+	var cnames []string
+	var aaaas []string
 	for _, rr := range msg.Answer {
 
 		switch rec := rr.(type) {
 
 		case *dns.CNAME:
-			testEquals(t, "CNAME record", "test1.example.com", rec.Target)
+			cnames = append(cnames, rec.Target)
 
 		case *dns.AAAA:
-			testEquals(t, "AAAA record", "::1", rec.AAAA.String())
+			aaaas = append(aaaas, rec.AAAA.String())
 
 		}
 
 	}
 
+	sort.Strings(cnames)
+	sort.Strings(aaaas)
+	testEquals(t, "CNAME record", []string{"test2-1.example.com", "test2-2.example.com"}, cnames)
+	testEquals(t, "AAAA record", []string{"::1", "::1"}, aaaas)
 }
 
 func testEquals(t *testing.T, msg string, expected interface{}, received interface{}) {
 
-	if expected != received {
+	if !reflect.DeepEqual(expected, received) {
 		t.Errorf("Expected %s %s: received %s", msg, expected, received)
 	}
 
