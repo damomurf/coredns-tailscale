@@ -14,7 +14,7 @@ import (
 type Tailscale struct {
 	Next     plugin.Handler
 	tsClient tailscale.LocalClient
-	entries  map[string]map[string]string
+	entries  map[string]map[string][]string
 	zone     string
 }
 
@@ -28,7 +28,7 @@ func NewTailscale(next plugin.Handler) *Tailscale {
 func (t *Tailscale) Name() string { return "tailscale" }
 
 func (t *Tailscale) pollPeers() {
-	t.entries = map[string]map[string]string{}
+	t.entries = map[string]map[string][]string{}
 
 	res, err := t.tsClient.Status(context.Background())
 	if err != nil {
@@ -45,21 +45,21 @@ func (t *Tailscale) pollPeers() {
 	}
 
 	for _, v := range hosts {
-
 		// Process IPs for A and AAAA records
 		for _, addr := range v.TailscaleIPs {
-
-			_, ok := t.entries[strings.ToLower(v.HostName)]
+			entries, ok := t.entries[strings.ToLower(v.HostName)]
 			if !ok {
-				t.entries[strings.ToLower(v.HostName)] = map[string]string{}
+				entries = map[string][]string{}
 			}
 
+			// Currently entries["A"/"AAAA"] will have max one element
 			if addr.Is4() {
-				t.entries[strings.ToLower(v.HostName)]["A"] = addr.String()
+				entries["A"] = append(entries["A"], addr.String())
 			} else if addr.Is6() {
-				t.entries[strings.ToLower(v.HostName)]["AAAA"] = addr.String()
+				entries["AAAA"] = append(entries["AAAA"], addr.String())
 			}
 
+			t.entries[strings.ToLower(v.HostName)] = entries
 		}
 
 		// Process Tags looking for cname- prefixed ones
@@ -68,11 +68,12 @@ func (t *Tailscale) pollPeers() {
 				raw := v.Tags.At(i)
 				if strings.HasPrefix(raw, "tag:cname-") {
 					tag := strings.TrimPrefix(raw, "tag:cname-")
-					t.entries[tag] = map[string]string{}
-					t.entries[tag]["CNAME"] = fmt.Sprintf("%s.%s.", v.HostName, t.zone)
+
+					t.entries[tag] = map[string][]string{
+						"CNAME": append(t.entries[tag]["CNAME"], fmt.Sprintf("%s.%s.", v.HostName, t.zone)),
+					}
 				}
 			}
 		}
 	}
-
 }
