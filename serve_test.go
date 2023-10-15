@@ -83,6 +83,33 @@ func TestServeDNSFallback(t *testing.T) {
 	}
 }
 
+func TestServeDNSNoFallback(t *testing.T) {
+	ts := newTS()
+
+	// No match
+	var msg dns.Msg
+	msg.SetQuestion("test3.example.com", dns.TypeA)
+	resp, err := ts.ServeDNS(context.Background(), dnstest.NewRecorder(&test.ResponseWriter{}), &msg)
+	if err != nil {
+		t.Fatal("unexpected error")
+	}
+	if want, got := dns.RcodeNameError, resp; got != want {
+		t.Fatalf("want response code %d, got %d", want, got)
+	}
+
+	// Match
+	msg.SetQuestion("test1.example.com", dns.TypeA)
+	w := dnstest.NewRecorder(&test.ResponseWriter{})
+	resp, err = ts.ServeDNS(context.Background(), w, &msg)
+	if want, got := dns.RcodeSuccess, resp; got != want {
+		t.Fatalf("want response code %d, got %d", want, got)
+	}
+	if want, got := net.ParseIP("127.0.0.1"), w.Msg.Answer[0].(*dns.A).A; !got.Equal(want) {
+		t.Errorf("want %s, got: %s", want, got)
+	}
+
+}
+
 func TestResolveA(t *testing.T) {
 	ts := newTS()
 	msg := dns.Msg{}
