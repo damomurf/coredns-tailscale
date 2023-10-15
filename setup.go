@@ -6,6 +6,7 @@ import (
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/pkg/fall"
 )
 
 // init registers this plugin.
@@ -18,18 +19,30 @@ func setup(c *caddy.Controller) error {
 	c.Next() // Ignore "tailscale" and give us the next token.
 	if c.NextArg() {
 		zone = c.Val()
-		c.Next()
+	}
+
+	f := fall.F{}
+
+	for c.NextBlock() {
+		switch c.Val() {
+		case "fallthrough":
+			f.SetZonesFromArgs(c.RemainingArgs())
+		default:
+			return c.Errf("unknown property '%s'", c.Val())
+		}
 	}
 	if c.NextArg() {
 		return plugin.Error("tailscale", c.ArgErr())
 	}
 
+	ts := &Tailscale{
+		zone: zone,
+		fall: f,
+	}
+
 	// Add the Plugin to CoreDNS, so Servers can use it in their plugin chain.
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
-		ts := &Tailscale{
-			Next: next,
-			zone: zone,
-		}
+		ts.Next = next
 		ts.pollPeers()
 		go func() {
 			for range time.Tick(1 * time.Minute) {
