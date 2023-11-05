@@ -13,28 +13,25 @@ import (
 	"github.com/miekg/dns"
 )
 
-var ts = Tailscale{
-	zone: "example.com",
-	entries: map[string]map[string][]string{
-		"test1": {
-			"A":    []string{"127.0.0.1"},
-			"AAAA": []string{"::1"},
+func newTS() Tailscale {
+	return Tailscale{
+		zone: "example.com",
+		entries: map[string]map[string]string{
+			"test1": {
+				"A":    "127.0.0.1",
+				"AAAA": "::1",
+			},
+			"test2": {
+				"CNAME": "test1.example.com",
+			},
 		},
-		"test2-1": {
-			"A":    []string{"127.0.0.1"},
-			"AAAA": []string{"::1"},
-		},
-		"test2-2": {
-			"A":    []string{"127.0.0.1"},
-			"AAAA": []string{"::1"},
-		},
-		"test2": {
-			"CNAME": []string{"test2-1.example.com", "test2-2.example.com"},
-		},
-	},
+	}
 }
 
-func TestServeDNS(t *testing.T) {
+func TestServeDNSFallback(t *testing.T) {
+	ts := newTS()
+	ts.fall.SetZonesFromArgs(nil)
+
 	test3 := net.ParseIP("100.100.100.100")
 
 	// No match, no next plugin.
@@ -88,8 +85,35 @@ func TestServeDNS(t *testing.T) {
 	}
 }
 
-func TestResolveA(t *testing.T) {
+func TestServeDNSNoFallback(t *testing.T) {
+	ts := newTS()
 
+	// No match
+	var msg dns.Msg
+	msg.SetQuestion("test3.example.com", dns.TypeA)
+	resp, err := ts.ServeDNS(context.Background(), dnstest.NewRecorder(&test.ResponseWriter{}), &msg)
+	if err != nil {
+		t.Fatal("unexpected error")
+	}
+	if want, got := dns.RcodeNameError, resp; got != want {
+		t.Fatalf("want response code %d, got %d", want, got)
+	}
+
+	// Match
+	msg.SetQuestion("test1.example.com", dns.TypeA)
+	w := dnstest.NewRecorder(&test.ResponseWriter{})
+	resp, err = ts.ServeDNS(context.Background(), w, &msg)
+	if want, got := dns.RcodeSuccess, resp; got != want {
+		t.Fatalf("want response code %d, got %d", want, got)
+	}
+	if want, got := net.ParseIP("127.0.0.1"), w.Msg.Answer[0].(*dns.A).A; !got.Equal(want) {
+		t.Errorf("want %s, got: %s", want, got)
+	}
+
+}
+
+func TestResolveA(t *testing.T) {
+	ts := newTS()
 	msg := dns.Msg{}
 
 	domain := "test1.example.com"
@@ -108,7 +132,7 @@ func TestResolveA(t *testing.T) {
 }
 
 func TestResolveAAAA(t *testing.T) {
-
+	ts := newTS()
 	msg := dns.Msg{}
 
 	domain := "test1.example.com"
@@ -127,7 +151,7 @@ func TestResolveAAAA(t *testing.T) {
 }
 
 func TestResolveCNAME(t *testing.T) {
-
+	ts := newTS()
 	msg := dns.Msg{}
 	domain := "test2.example.com"
 
@@ -163,7 +187,7 @@ func TestResolveCNAME(t *testing.T) {
 }
 
 func TestResolveAIsCNAME(t *testing.T) {
-
+	ts := newTS()
 	msg := dns.Msg{}
 	domain := "test2.example.com"
 
@@ -194,7 +218,7 @@ func TestResolveAIsCNAME(t *testing.T) {
 }
 
 func TestResolveAAAAIsCNAME(t *testing.T) {
-
+	ts := newTS()
 	msg := dns.Msg{}
 	domain := "test2.example.com"
 

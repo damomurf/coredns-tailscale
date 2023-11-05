@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/test"
+	"github.com/coredns/coredns/plugin/pkg/fall"
 	"tailscale.com/client/tailscale"
 	"tailscale.com/ipn/ipnstate"
 )
@@ -16,12 +16,7 @@ type Tailscale struct {
 	tsClient tailscale.LocalClient
 	entries  map[string]map[string][]string
 	zone     string
-}
-
-func NewTailscale(next plugin.Handler) *Tailscale {
-	ts := Tailscale{Next: test.ErrorHandler()}
-	ts.pollPeers()
-	return &ts
+	fall     fall.F
 }
 
 // Name implements the Handler interface.

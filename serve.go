@@ -88,6 +88,17 @@ func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg, lookupType int
 
 }
 
+func (t *Tailscale) handleNoRecords(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, msg *dns.Msg) (int, error) {
+	if t.fall.Through(r.Question[0].Name) {
+		log.Debug("falling through")
+		return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
+	} else {
+		log.Debugf("Writing response: %+v", msg)
+		w.WriteMsg(msg)
+		return dns.RcodeNameError, nil
+	}
+}
+
 func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	log.Debugf("Received request for name: %v", r.Question[0].Name)
 	log.Debugf("Tailscale peers list has %d entries", len(t.entries))
@@ -96,31 +107,32 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 	msg.SetReply(r)
 	msg.Authoritative = true
 
+	name := r.Question[0].Name
+
 	switch r.Question[0].Qtype {
 
 	case dns.TypeA:
 		log.Debug("Handling A record lookup")
-		t.resolveA(r.Question[0].Name, &msg)
+		t.resolveA(name, &msg)
 
 	case dns.TypeAAAA:
 		log.Debug("Handling AAAA record lookup")
-		t.resolveAAAA(r.Question[0].Name, &msg)
+		t.resolveAAAA(name, &msg)
 
 	case dns.TypeCNAME:
 		log.Debug("Handling CNAME record lookup")
-		t.resolveCNAME(r.Question[0].Name, &msg, TypeAll)
+		t.resolveCNAME(name, &msg, TypeAll)
 
 	}
 
-	if len(msg.Answer) > 0 {
-		log.Debugf("Writing response: %+v", msg)
-		w.WriteMsg(&msg)
-		return dns.RcodeSuccess, nil
+	if len(msg.Answer) == 0 {
+		return t.handleNoRecords(ctx, w, r, &msg)
 	}
 
 	// Export metric with the server label set to the current server handling the request.
 	//requestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
 
-	// Call next plugin (if any).
-	return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
+	log.Debugf("Writing response: %+v", msg)
+	w.WriteMsg(&msg)
+	return dns.RcodeSuccess, nil
 }
