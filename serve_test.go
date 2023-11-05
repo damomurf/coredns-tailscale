@@ -14,15 +14,24 @@ import (
 )
 
 func newTS() Tailscale {
+
 	return Tailscale{
 		zone: "example.com",
-		entries: map[string]map[string]string{
+		entries: map[string]map[string][]string{
 			"test1": {
-				"A":    "127.0.0.1",
-				"AAAA": "::1",
+				"A":    []string{"127.0.0.1"},
+				"AAAA": []string{"::1"},
+			},
+			"test2-1": {
+				"A":    []string{"127.0.0.1"},
+				"AAAA": []string{"::1"},
+			},
+			"test2-2": {
+				"A":    []string{"127.0.0.1"},
+				"AAAA": []string{"::1"},
 			},
 			"test2": {
-				"CNAME": "test1.example.com",
+				"CNAME": []string{"test2-1.example.com", "test2-2.example.com"},
 			},
 		},
 	}
