@@ -109,8 +109,8 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 	name := r.Question[0].Name
 
+	t.mu.RLock()
 	switch r.Question[0].Qtype {
-
 	case dns.TypeA:
 		log.Debug("Handling A record lookup")
 		t.resolveA(name, &msg)
@@ -122,8 +122,8 @@ func (t *Tailscale) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 	case dns.TypeCNAME:
 		log.Debug("Handling CNAME record lookup")
 		t.resolveCNAME(name, &msg, TypeAll)
-
 	}
+	defer t.mu.RUnlock()
 
 	if len(msg.Answer) == 0 {
 		return t.handleNoRecords(ctx, w, r, &msg)

@@ -1,8 +1,6 @@
 package tailscale
 
 import (
-	"time"
-
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
@@ -43,12 +41,7 @@ func setup(c *caddy.Controller) error {
 	// Add the Plugin to CoreDNS, so Servers can use it in their plugin chain.
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		ts.Next = next
-		ts.pollPeers()
-		go func() {
-			for range time.Tick(1 * time.Minute) {
-				ts.pollPeers()
-			}
-		}()
+		go ts.watchIPNBus()
 		return ts
 	})
 
