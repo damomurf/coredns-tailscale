@@ -4,7 +4,6 @@ import (
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/pkg/fall"
 )
 
 // init registers this plugin.
@@ -13,35 +12,37 @@ func init() { plugin.Register("tailscale", setup) }
 // setup is the function that gets called when the config parser see the token "example". Setup is responsible
 // for parsing any extra options the example plugin may have. The first token this function sees is "example".
 func setup(c *caddy.Controller) error {
-	var zone string
-	c.Next() // Ignore "tailscale" and give us the next token.
-	if c.NextArg() {
-		zone = c.Val()
-	}
-
-	f := fall.F{}
-
-	for c.NextBlock() {
-		switch c.Val() {
-		case "fallthrough":
-			f.SetZonesFromArgs(c.RemainingArgs())
-		default:
-			return c.Errf("unknown property '%s'", c.Val())
+	ts := &Tailscale{}
+	for c.Next() {
+		args := c.RemainingArgs()
+		if len(args) != 1 {
+			return plugin.Error("tailscale", c.ArgErr())
 		}
-	}
-	if c.NextArg() {
-		return plugin.Error("tailscale", c.ArgErr())
-	}
+		ts.zone = args[0]
 
-	ts := &Tailscale{
-		zone: zone,
-		fall: f,
+		for c.NextBlock() {
+			switch c.Val() {
+			case "authkey":
+				args := c.RemainingArgs()
+				if len(args) != 1 {
+					return plugin.Error("tailscale", c.ArgErr())
+				}
+				ts.authkey = args[0]
+			case "fallthrough":
+				ts.fall.SetZonesFromArgs(c.RemainingArgs())
+			default:
+				return plugin.Error("tailscale", c.ArgErr())
+			}
+		}
 	}
 
 	// Add the Plugin to CoreDNS, so Servers can use it in their plugin chain.
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
-		ts.Next = next
-		go ts.watchIPNBus()
+		ts.next = next
+		if err := ts.start(); err != nil {
+			log.Error(err)
+			return nil
+		}
 		return ts
 	})
 

@@ -54,7 +54,7 @@ func TestServeDNSFallback(t *testing.T) {
 		t.Fatalf("want response code %d, got %d", want, got)
 	}
 
-	ts.Next = plugin.HandlerFunc(func(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	ts.next = plugin.HandlerFunc(func(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		msg := dns.Msg{}
 		msg.SetReply(r)
 		msg.Answer = append(msg.Answer, &dns.A{

@@ -12,14 +12,18 @@ import (
 	"tailscale.com/client/tailscale"
 	"tailscale.com/ipn"
 	"tailscale.com/tailcfg"
+	"tailscale.com/tsnet"
 	"tailscale.com/types/netmap"
 )
 
 type Tailscale struct {
-	Next     plugin.Handler
-	tsClient tailscale.LocalClient
-	zone     string
-	fall     fall.F
+	next plugin.Handler
+	zone string
+	fall fall.F
+
+	authkey string
+	srv     *tsnet.Server
+	lc      *tailscale.LocalClient
 
 	mu      sync.RWMutex
 	entries map[string]map[string][]string
@@ -28,11 +32,41 @@ type Tailscale struct {
 // Name implements the Handler interface.
 func (t *Tailscale) Name() string { return "tailscale" }
 
+// start connects the Tailscale plugin to a tailscale daemon and populates DNS entries for nodes in the tailnet.
+// DNS entries are automatically kept up to date with any node changes.
+//
+// If t.authkey is non-empty, this function uses that key to connect to the Tailnet using a tsnet server
+// instead of connecting to the local tailscaled instance.
+func (t *Tailscale) start() error {
+	if t.authkey != "" {
+		// authkey was provided, so startup a local tsnet server
+		t.srv = &tsnet.Server{
+			Hostname: "coredns",
+			AuthKey:  t.authkey,
+			Logf:     log.Debugf,
+		}
+		err := t.srv.Start()
+		if err != nil {
+			return err
+		}
+		t.lc, err = t.srv.LocalClient()
+		if err != nil {
+			return err
+		}
+	} else {
+		// zero value LocalClient will connect to local tailscaled
+		t.lc = &tailscale.LocalClient{}
+	}
+
+	go t.watchIPNBus()
+	return nil
+}
+
 // watchIPNBus watches the Tailscale IPN Bus and updates DNS entries for any netmap update.
 // This function does not return. If it is unable to read from the IPN Bus, it will continue to retry.
 func (t *Tailscale) watchIPNBus() {
 	for {
-		watcher, err := t.tsClient.WatchIPNBus(context.Background(), ipn.NotifyInitialNetMap)
+		watcher, err := t.lc.WatchIPNBus(context.Background(), ipn.NotifyInitialNetMap)
 		if err != nil {
 			log.Info("unable to read from Tailscale event bus, retrying in 1 minute")
 			time.Sleep(1 * time.Minute)
