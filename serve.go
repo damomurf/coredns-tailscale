@@ -25,13 +25,15 @@ const (
 func (t *Tailscale) resolveA(domainName string, msg *dns.Msg) {
 
 	name := strings.Split(domainName, ".")[0]
-	entry, ok := t.entries[name]["A"]
+	entries, ok := t.entries[name]["A"]
 	if ok {
 		log.Debugf("Found an v4 entry after lookup for: %s", name)
-		msg.Answer = append(msg.Answer, &dns.A{
-			Hdr: dns.RR_Header{Name: domainName, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
-			A:   net.ParseIP(entry),
-		})
+		for _, entry := range entries {
+			msg.Answer = append(msg.Answer, &dns.A{
+				Hdr: dns.RR_Header{Name: domainName, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+				A:   net.ParseIP(entry),
+			})
+		}
 	} else {
 		// There's no A record, so see if a CNAME exists
 		log.Debug("No v4 entry after lookup, so trying CNAME")
@@ -43,13 +45,15 @@ func (t *Tailscale) resolveA(domainName string, msg *dns.Msg) {
 func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 
 	name := strings.Split(domainName, ".")[0]
-	entry, ok := t.entries[name]["AAAA"]
+	entries, ok := t.entries[name]["AAAA"]
 	if ok {
 		log.Debugf("Found a v6 entry after lookup for: %s", name)
-		msg.Answer = append(msg.Answer, &dns.AAAA{
-			Hdr:  dns.RR_Header{Name: domainName, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60},
-			AAAA: net.ParseIP(entry),
-		})
+		for _, entry := range entries {
+			msg.Answer = append(msg.Answer, &dns.AAAA{
+				Hdr:  dns.RR_Header{Name: domainName, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 60},
+				AAAA: net.ParseIP(entry),
+			})
+		}
 	} else {
 		// There's no AAAA record, so see if a CNAME exists
 		log.Debug("No v6 entry after lookup, so trying CNAME")
@@ -61,22 +65,24 @@ func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg, lookupType int) {
 
 	name := strings.Split(domainName, ".")[0]
-	target, ok := t.entries[name]["CNAME"]
+	targets, ok := t.entries[name]["CNAME"]
 	if ok {
 		log.Debugf("Found a CNAME entry after lookup for: %s", name)
-		msg.Answer = append(msg.Answer, &dns.CNAME{
-			Hdr:    dns.RR_Header{Name: domainName, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 60},
-			Target: target,
-		})
+		for _, target := range targets {
+			msg.Answer = append(msg.Answer, &dns.CNAME{
+				Hdr:    dns.RR_Header{Name: domainName, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 60},
+				Target: target,
+			})
 
-		// Resolve local zone A or AAAA records if they exist for the referenced target
-		if lookupType == TypeAll || lookupType == TypeA {
-			log.Debug("CNAME record found, lookup up local recursive A")
-			t.resolveA(target, msg)
-		}
-		if lookupType == TypeAll || lookupType == TypeAAAA {
-			log.Debug("CNAME record found, lookup up local recursive AAAA")
-			t.resolveAAAA(target, msg)
+			// Resolve local zone A or AAAA records if they exist for the referenced target
+			if lookupType == TypeAll || lookupType == TypeA {
+				log.Debug("CNAME record found, lookup up local recursive A")
+				t.resolveA(target, msg)
+			}
+			if lookupType == TypeAll || lookupType == TypeAAAA {
+				log.Debug("CNAME record found, lookup up local recursive AAAA")
+				t.resolveAAAA(target, msg)
+			}
 		}
 	}
 
