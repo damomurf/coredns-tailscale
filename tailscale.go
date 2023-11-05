@@ -4,71 +4,109 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/fall"
 	"tailscale.com/client/tailscale"
-	"tailscale.com/ipn/ipnstate"
+	"tailscale.com/ipn"
+	"tailscale.com/tailcfg"
+	"tailscale.com/types/netmap"
 )
 
 type Tailscale struct {
 	Next     plugin.Handler
 	tsClient tailscale.LocalClient
-	entries  map[string]map[string][]string
 	zone     string
 	fall     fall.F
+
+	mu      sync.RWMutex
+	entries map[string]map[string][]string
 }
 
 // Name implements the Handler interface.
 func (t *Tailscale) Name() string { return "tailscale" }
 
-func (t *Tailscale) pollPeers() {
-	t.entries = map[string]map[string][]string{}
+// watchIPNBus watches the Tailscale IPN Bus and updates DNS entries for any netmap update.
+// This function does not return. If it is unable to read from the IPN Bus, it will continue to retry.
+func (t *Tailscale) watchIPNBus() {
+	for {
+		watcher, err := t.tsClient.WatchIPNBus(context.Background(), ipn.NotifyInitialNetMap)
+		if err != nil {
+			log.Info("unable to read from Tailscale event bus, retrying in 1 minute")
+			time.Sleep(1 * time.Minute)
+			continue
+		}
+		defer watcher.Close()
 
-	res, err := t.tsClient.Status(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Debugf("Self tags: %+v", res.Self.Tags)
-
-	// Add self to list of considered hosts
-	hosts := []*ipnstate.PeerStatus{res.Self}
-
-	// Add all peers to considered host list
-	for _, status := range res.Peer {
-		hosts = append(hosts, status)
-	}
-
-	for _, v := range hosts {
-		// Process IPs for A and AAAA records
-		for _, addr := range v.TailscaleIPs {
-			entries, ok := t.entries[strings.ToLower(v.HostName)]
-			if !ok {
-				entries = map[string][]string{}
+		for {
+			n, err := watcher.Next()
+			if err != nil {
+				// If we're unable to read, then close watcher and reconnect
+				watcher.Close()
+				break
 			}
+			t.processNetMap(n.NetMap)
+		}
+	}
+}
 
-			// Currently entries["A"/"AAAA"] will have max one element
+func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
+	if nm == nil {
+		return
+	}
+
+	log.Debugf("Self tags: %+v", nm.SelfNode.Tags().AsSlice())
+	nodes := []tailcfg.NodeView{nm.SelfNode}
+	nodes = append(nodes, nm.Peers...)
+
+	entries := map[string]map[string][]string{}
+	for _, node := range nodes {
+		if node.IsWireGuardOnly() {
+			// IsWireGuardOnly identifies a node as a Mullvad exit node.
+			continue
+		}
+		if !node.Sharer().IsZero() {
+			// Skip shared nodes, since they don't necessarily have unique hostnames within this tailnet.
+			// TODO: possibly make it configurable to include shared nodes and figure out what hostname to use.
+			continue
+		}
+
+		hostname := node.ComputedName()
+		entry, ok := entries[hostname]
+		if !ok {
+			entry = map[string][]string{}
+		}
+
+		// Currently entry["A"/"AAAA"] will have max one element
+		for _, pfx := range node.Addresses().AsSlice() {
+
+			addr := pfx.Addr()
 			if addr.Is4() {
-				entries["A"] = append(entries["A"], addr.String())
+				entry["A"] = append(entry["A"], addr.String())
 			} else if addr.Is6() {
-				entries["AAAA"] = append(entries["AAAA"], addr.String())
+				entry["AAAA"] = append(entry["AAAA"], addr.String())
 			}
-
-			t.entries[strings.ToLower(v.HostName)] = entries
 		}
 
 		// Process Tags looking for cname- prefixed ones
-		if v.Tags != nil {
-			for i := 0; i < v.Tags.Len(); i++ {
-				raw := v.Tags.At(i)
-				if strings.HasPrefix(raw, "tag:cname-") {
-					tag := strings.TrimPrefix(raw, "tag:cname-")
-
-					t.entries[tag] = map[string][]string{
-						"CNAME": append(t.entries[tag]["CNAME"], fmt.Sprintf("%s.%s.", v.HostName, t.zone)),
+		if node.Tags().Len() > 0 {
+			for _, raw := range node.Tags().AsSlice() {
+				if tag, ok := strings.CutPrefix(raw, "tag:cname-"); ok {
+					if _, ok := entries[tag]; !ok {
+						entries[tag] = map[string][]string{}
 					}
+					entries[tag]["CNAME"] = append(entries[tag]["CNAME"], fmt.Sprintf("%s.%s.", hostname, t.zone))
 				}
 			}
 		}
+
+		entries[hostname] = entry
 	}
+
+	t.mu.Lock()
+	t.entries = entries
+	t.mu.Unlock()
+	log.Debugf("updated %d Tailscale entries", len(entries))
 }
