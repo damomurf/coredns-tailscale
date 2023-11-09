@@ -91,7 +91,7 @@ func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg, lookupType int
 func (t *Tailscale) handleNoRecords(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, msg *dns.Msg) (int, error) {
 	if t.fall.Through(r.Question[0].Name) {
 		log.Debug("falling through")
-		return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
+		return plugin.NextOrFailure(t.Name(), t.next, ctx, w, r)
 	} else {
 		log.Debugf("Writing response: %+v", msg)
 		w.WriteMsg(msg)
