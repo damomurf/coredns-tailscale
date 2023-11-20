@@ -1,4 +1,4 @@
-name: Go
+name: Build
 on: [push]
 
 jobs:
@@ -6,14 +6,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - uses: actions/checkout@v3
+
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
+
       - name: Install dependencies
         run: go get .
+
       - name: Build
         run: go build -v ./...
+
       - name: Test with the Go CLI
         run: go test -v
+
+      - name: Build Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: false
+
