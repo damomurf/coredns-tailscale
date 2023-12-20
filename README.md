@@ -20,8 +20,8 @@ Configuration
 -------------
 
 ```
-example.org:53 {
-  tailscale example.org
+example.com:53 {
+  tailscale example.com
   log 
   errors
 }
