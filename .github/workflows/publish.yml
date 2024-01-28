@@ -31,7 +31,8 @@ jobs:
 
     steps:
       - uses: docker/setup-qemu-action@v3
-        platforms: ${{ matrix.platform }}
+        with:
+          platforms: ${{ matrix.platform }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,6 +58,6 @@ jobs:
         with:
           context: .
           push: true
-          platforms: ${{ platform }}
+          platforms: ${{ matrix.platform }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
