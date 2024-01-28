@@ -6,11 +6,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
 
@@ -24,7 +23,7 @@ jobs:
         run: go test -v
 
       - name: Build Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: false
