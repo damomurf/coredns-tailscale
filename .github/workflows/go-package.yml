@@ -4,11 +4,11 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
+    strategy: matrix
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+        include:
+          - platform: linux/amd64
+          - platform: linux/arm64
 
     steps:
       - uses: docker/setup-qemu-action@v3
