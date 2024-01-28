@@ -12,7 +12,8 @@ jobs:
 
     steps:
       - uses: docker/setup-qemu-action@v3
-        platforms: arm64,amd64
+        with:
+          platforms: arm64,amd64
 
       - uses: actions/checkout@v3
 
