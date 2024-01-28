@@ -19,12 +19,19 @@ env:
 
 jobs:
   build-and-push-image:
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+          - platform: linux/arm64
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
+      - uses: docker/setup-qemu-action@v3
+        platforms: arm64,amd64
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -46,5 +53,6 @@ jobs:
         with:
           context: .
           push: true
+          platforms: ${{ platform }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

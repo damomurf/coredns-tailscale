@@ -3,9 +3,16 @@ on: [push]
 
 jobs:
   build:
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+          - platform: linux/arm64
     runs-on: ubuntu-latest
 
     steps:
+      - uses: docker/setup-qemu-action@v3
+        platforms: arm64,amd64
 
       - uses: actions/checkout@v3
 
