@@ -31,7 +31,7 @@ jobs:
       - name: Test with the Go CLI
         run: go test -v
 
-      - name: Test with the Go CLI
+      - name: Output Env
         run: echo "GOOS: $GOOS GOARCH: $GOARCH"
 
       - name: Build Docker image
