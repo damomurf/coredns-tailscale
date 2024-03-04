@@ -1,4 +1,4 @@
-FROM golang:1.21.6-alpine3.19 AS build
+FROM golang:1.22.0-alpine3.19 AS build
 
 WORKDIR /go/src/coredns
 
