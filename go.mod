@@ -3,7 +3,7 @@ module github.com/damomurf/coredns-tailscale
 go 1.22
 require (
 	github.com/coredns/caddy v1.1.1
-	github.com/coredns/coredns v1.11.1
+	github.com/coredns/coredns v1.11.2
 	github.com/google/go-cmp v0.6.0
 	github.com/miekg/dns v1.1.58
 	tailscale.com v1.60.1
@@ -63,8 +63,10 @@ require (
 	github.com/mdlayher/socket v0.5.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.13.0 // indirect
+	github.com/onsi/gomega v1.29.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.46.0 // indirect
@@ -100,8 +102,8 @@ require (
 	golang.org/x/tools v0.17.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231030173426-d783a09b4405 // indirect
-	google.golang.org/grpc v1.59.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
+	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20240119233241-c9c1d4f9b186 // indirect
 	inet.af/peercred v0.0.0-20210906144145-0893ea02156a // indirect
