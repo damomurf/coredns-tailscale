@@ -1,6 +1,8 @@
 module github.com/damomurf/coredns-tailscale
 
 go 1.22
+toolchain go1.22.1
+
 require (
 	github.com/coredns/caddy v1.1.1
 	github.com/coredns/coredns v1.11.2
@@ -104,7 +106,7 @@ require (
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
 	google.golang.org/grpc v1.61.0 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20240119233241-c9c1d4f9b186 // indirect
 	inet.af/peercred v0.0.0-20210906144145-0893ea02156a // indirect
 	nhooyr.io/websocket v1.8.10 // indirect
