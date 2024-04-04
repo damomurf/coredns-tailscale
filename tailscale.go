@@ -41,9 +41,10 @@ func (t *Tailscale) start() error {
 	if t.authkey != "" {
 		// authkey was provided, so startup a local tsnet server
 		t.srv = &tsnet.Server{
-			Hostname: "coredns",
-			AuthKey:  t.authkey,
-			Logf:     log.Debugf,
+			Hostname:     "coredns",
+			AuthKey:      t.authkey,
+			Logf:         log.Debugf,
+			RunWebClient: true,
 		}
 		err := t.srv.Start()
 		if err != nil {

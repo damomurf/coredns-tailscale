@@ -1,6 +1,7 @@
 module github.com/damomurf/coredns-tailscale
 
-go 1.22
+go 1.22.0
+
 toolchain go1.22.1
 
 require (
