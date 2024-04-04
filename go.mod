@@ -9,7 +9,7 @@ require (
 	github.com/coredns/coredns v1.11.2
 	github.com/google/go-cmp v0.6.0
 	github.com/miekg/dns v1.1.58
-	tailscale.com v1.60.1
+	tailscale.com v1.62.1
 )
 
 require (
@@ -83,7 +83,8 @@ require (
 	github.com/tailscale/goupnp v1.0.1-0.20210804011211-c64d0f06ea05 // indirect
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a // indirect
 	github.com/tailscale/netlink v1.1.1-0.20211101221916-cabfb018fe85 // indirect
-	github.com/tailscale/web-client-prebuilt v0.0.0-20240208184856-443a64766f61 // indirect
+	github.com/tailscale/peercred v0.0.0-20240214030740-b535050b2aa4 // indirect
+	github.com/tailscale/web-client-prebuilt v0.0.0-20240226180453-5db17b287bf1 // indirect
 	github.com/tailscale/wireguard-go v0.0.0-20231121184858-cc193a0b3272 // indirect
 	github.com/tcnksm/go-httpstat v0.2.0 // indirect
 	github.com/u-root/uio v0.0.0-20240118234441-a3c409a6018e // indirect
@@ -98,7 +99,7 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
@@ -108,7 +109,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
 	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
-	gvisor.dev/gvisor v0.0.0-20240119233241-c9c1d4f9b186 // indirect
-	inet.af/peercred v0.0.0-20210906144145-0893ea02156a // indirect
+	gvisor.dev/gvisor v0.0.0-20240306221502-ee1e1f6070e3 // indirect
 	nhooyr.io/websocket v1.8.10 // indirect
 )
