@@ -169,6 +169,8 @@ github.com/pkg/sftp v1.13.6/go.mod h1:tz1ryNURKu77RL+GuCzmoJYxQczL3wLNNpPWagdg4Q
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/prometheus-community/pro-bing v0.4.0 h1:YMbv+i08gQz97OZZBwLyvmmQEEzyfyrrjEaAchdy3R4=
+github.com/prometheus-community/pro-bing v0.4.0/go.mod h1:b7wRYZtCcPmt4Sz319BykUU241rWLe1VFXyiyWK/dH4=
 github.com/prometheus/client_golang v1.19.0 h1:ygXvpU1AoN1MhdzckN+PyD9QJOSD4x7kmXYlnfbA6JU=
 github.com/prometheus/client_golang v1.19.0/go.mod h1:ZRM9uEAypZakd+q/x7+gmsvXdURP+DABIEIjnmDdp+k=
 github.com/prometheus/client_model v0.6.0 h1:k1v3CzpSRUTrKMppY35TLwPvxHqBu0bYgxZzqGIgaos=
@@ -192,8 +194,8 @@ github.com/tailscale/certstore v0.1.1-0.20231202035212-d3fa0460f47e h1:PtWT87weP
 github.com/tailscale/certstore v0.1.1-0.20231202035212-d3fa0460f47e/go.mod h1:XrBNfAFN+pwoWuksbFS9Ccxnopa15zJGgXRFN90l3K4=
 github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55 h1:Gzfnfk2TWrk8Jj4P4c1a3CtQyMaTVCznlkLZI++hok4=
 github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55/go.mod h1:4k4QO+dQ3R5FofL+SanAUZe+/QfeK0+OIuwDIRu2vSg=
-github.com/tailscale/golang-x-crypto v0.0.0-20240108194725-7ce1f622c780 h1:U0J2CUrrTcc2wmr9tSLYEo+USfwNikRRsmxVLD4eZ7E=
-github.com/tailscale/golang-x-crypto v0.0.0-20240108194725-7ce1f622c780/go.mod h1:ikbF+YT089eInTp9f2vmvy4+ZVnW5hzX1q2WknxSprQ=
+github.com/tailscale/golang-x-crypto v0.0.0-20240604161659-3fde5e568aa4 h1:rXZGgEa+k2vJM8xT0PoSKfVXwFGPQ3z3CJfmnHJkZZw=
+github.com/tailscale/golang-x-crypto v0.0.0-20240604161659-3fde5e568aa4/go.mod h1:ikbF+YT089eInTp9f2vmvy4+ZVnW5hzX1q2WknxSprQ=
 github.com/tailscale/goupnp v1.0.1-0.20210804011211-c64d0f06ea05 h1:4chzWmimtJPxRs2O36yuGRW3f9SYV+bMTTvMBI0EKio=
 github.com/tailscale/goupnp v1.0.1-0.20210804011211-c64d0f06ea05/go.mod h1:PdCqy9JzfWMJf1H5UJW2ip33/d4YkoKN0r67yKH1mG8=
 github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a h1:SJy1Pu0eH1C29XwJucQo73FrleVK6t4kYz4NVhp34Yw=
@@ -291,5 +293,5 @@ nhooyr.io/websocket v1.8.10 h1:mv4p+MnGrLDcPlBoWsvPP7XCzTYMXP9F9eIGoKbgx7Q=
 nhooyr.io/websocket v1.8.10/go.mod h1:rN9OFWIUwuxg4fR5tELlYC04bXYowCP9GX47ivo2l+c=
 software.sslmate.com/src/go-pkcs12 v0.4.0 h1:H2g08FrTvSFKUj+D309j1DPfk5APnIdAQAB8aEykJ5k=
 software.sslmate.com/src/go-pkcs12 v0.4.0/go.mod h1:Qiz0EyvDRJjjxGyUQa2cCNZn/wMyzrRJ/qcDXOQazLI=
-tailscale.com v1.66.4 h1:V0vTQah3xi2/zbsxJeOfl5QbO1WJPeD9TMlfL0daXqc=
-tailscale.com v1.66.4/go.mod h1:99BIV4U3UPw36Sva04xK2ZsEpVRUkY9jCdEDSAhaNGM=
+tailscale.com v1.68.1 h1:Fh0P1kNqI6EiN48dDiDWAIZguzIkuOo7UHDVG9ulQ2U=
+tailscale.com v1.68.1/go.mod h1:uqtoDEA8tw5+S+HLGqQGfpQsqeVtBS/EVVv5mXIaAoQ=
