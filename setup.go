@@ -28,8 +28,15 @@ func setup(c *caddy.Controller) error {
 					return plugin.Error("tailscale", c.ArgErr())
 				}
 				ts.authkey = args[0]
+			case "hostname":
+				args := c.RemainingArgs()
+				if len(args) != 1 {
+					return plugin.Error("tailscale", c.ArgErr())
+				}
+				ts.hostname = args[0]
 			case "fallthrough":
 				ts.fall.SetZonesFromArgs(c.RemainingArgs())
+
 			default:
 				return plugin.Error("tailscale", c.ArgErr())
 			}
