@@ -21,9 +21,10 @@ type Tailscale struct {
 	zone string
 	fall fall.F
 
-	authkey string
-	srv     *tsnet.Server
-	lc      *tailscale.LocalClient
+	authkey  string
+	hostname string
+	srv      *tsnet.Server
+	lc       *tailscale.LocalClient
 
 	mu      sync.RWMutex
 	entries map[string]map[string][]string
@@ -39,9 +40,13 @@ func (t *Tailscale) Name() string { return "tailscale" }
 // instead of connecting to the local tailscaled instance.
 func (t *Tailscale) start() error {
 	if t.authkey != "" {
+		hostname := t.hostname
+		if t.hostname == "" {
+			hostname = "coredns"
+		}
 		// authkey was provided, so startup a local tsnet server
 		t.srv = &tsnet.Server{
-			Hostname:     "coredns",
+			Hostname:     hostname,
 			AuthKey:      t.authkey,
 			Logf:         log.Debugf,
 			RunWebClient: true,
