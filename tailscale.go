@@ -72,7 +72,7 @@ func (t *Tailscale) start() error {
 // This function does not return. If it is unable to read from the IPN Bus, it will continue to retry.
 func (t *Tailscale) watchIPNBus() {
 	for {
-		watcher, err := t.lc.WatchIPNBus(context.Background(), ipn.NotifyInitialNetMap)
+		watcher, err := t.lc.WatchIPNBus(context.Background(), ipn.NotifyInitialNetMap|ipn.NotifyNoPrivateKeys)
 		if err != nil {
 			log.Info("unable to read from Tailscale event bus, retrying in 1 minute")
 			time.Sleep(1 * time.Minute)
