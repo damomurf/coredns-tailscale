@@ -6,7 +6,7 @@ require (
 	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98
 	github.com/coredns/coredns v1.12.1
 	github.com/google/go-cmp v0.7.0
-	github.com/miekg/dns v1.1.64
+	github.com/miekg/dns v1.1.65
 	tailscale.com v1.80.3
 )
 
