@@ -24,7 +24,7 @@ const (
 
 func (t *Tailscale) resolveA(domainName string, msg *dns.Msg) {
 
-	name := strings.Split(domainName, ".")[0]
+	name := strings.TrimSuffix(strings.ToLower(domainName), ".")
 	entries, ok := t.entries[name]["A"]
 	if ok {
 		log.Debugf("Found an v4 entry after lookup for: %s", name)
@@ -44,7 +44,7 @@ func (t *Tailscale) resolveA(domainName string, msg *dns.Msg) {
 
 func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 
-	name := strings.Split(domainName, ".")[0]
+	name := strings.TrimSuffix(strings.ToLower(domainName), ".")
 	entries, ok := t.entries[name]["AAAA"]
 	if ok {
 		log.Debugf("Found a v6 entry after lookup for: %s", name)
@@ -64,7 +64,7 @@ func (t *Tailscale) resolveAAAA(domainName string, msg *dns.Msg) {
 
 func (t *Tailscale) resolveCNAME(domainName string, msg *dns.Msg, lookupType int) {
 
-	name := strings.Split(domainName, ".")[0]
+	name := strings.TrimSuffix(strings.ToLower(domainName), ".")
 	targets, ok := t.entries[name]["CNAME"]
 	if ok {
 		log.Debugf("Found a CNAME entry after lookup for: %s", name)
