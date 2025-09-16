@@ -1,9 +1,9 @@
-FROM golang:1.24.5-alpine3.21 AS build
+FROM golang:1.25.1-alpine3.22 AS build
 
 WORKDIR /go/src/coredns
 
 RUN apk add git make && \
-    git clone --depth 1 --branch=v1.11.3 https://github.com/coredns/coredns /go/src/coredns && cd plugin
+    git clone --depth 1 --branch=v1.12.4 https://github.com/coredns/coredns /go/src/coredns && cd plugin
 
 COPY . /go/src/coredns/plugin/tailscale
 
