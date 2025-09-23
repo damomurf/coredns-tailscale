@@ -3,7 +3,7 @@ module github.com/damomurf/coredns-tailscale
 go 1.25.1
 
 require (
-	github.com/coredns/caddy v1.1.2-0.20241029205200-8de985351a98
+	github.com/coredns/caddy v1.1.3
 	github.com/coredns/coredns v1.12.4
 	github.com/google/go-cmp v0.7.0
 	github.com/miekg/dns v1.1.68
