@@ -7,7 +7,7 @@ require (
 	github.com/coredns/coredns v1.12.4
 	github.com/google/go-cmp v0.7.0
 	github.com/miekg/dns v1.1.68
-	tailscale.com v1.88.1
+	tailscale.com v1.88.2
 )
 
 require (
