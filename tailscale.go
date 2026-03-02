@@ -145,6 +145,31 @@ func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
 		entries[hostname] = entry
 	}
 
+	log.Debug("Looking for service VIPs")
+	svcs := nm.GetVIPServiceIPMap()
+	for svcname, svc := range svcs {
+		if name, ok := strings.CutPrefix(string(svcname), "svc:"); ok {
+			log.Debugf("Found service entry: %s", name)
+
+			entry, ok := entries[name]
+			if !ok {
+				entry = map[string][]string{}
+			}
+
+			for _, addr := range svc {
+				if addr.Is4() {
+					entry["A"] = append(entry["A"], addr.String())
+				} else if addr.Is6() {
+					entry["AAAA"] = append(entry["AAAA"], addr.String())
+				}
+				log.Debugf("Added entry %+v", entry)
+			}
+
+			entries[name] = entry
+		}
+
+	}
+
 	t.mu.Lock()
 	t.entries = entries
 	t.mu.Unlock()
