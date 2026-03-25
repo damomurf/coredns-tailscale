@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/coredns/caddy v1.1.4
-	github.com/coredns/coredns v1.14.1
+	github.com/coredns/coredns v1.14.2
 	github.com/google/go-cmp v0.7.0
 	github.com/miekg/dns v1.1.72
 	tailscale.com v1.94.2
