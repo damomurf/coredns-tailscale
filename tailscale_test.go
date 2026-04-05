@@ -53,6 +53,18 @@ func TestProcessNetMap(t *testing.T) {
 				Tags: []string{"tag:cname-app"},
 			}).View(),
 		},
+		DNS: tailcfg.DNSConfig{
+			ExtraRecords: []tailcfg.DNSRecord{
+				{
+					Name:  "vip-service.tail-scale.ts.net",
+					Value: "100.0.0.5",
+				},
+				{
+					Name:  "vip-service.tail-scale.ts.net",
+					Value: "fd7a:115c:a1e0::5",
+				},
+			},
+		},
 	}
 
 	want := map[string]map[string][]string{
@@ -66,6 +78,10 @@ func TestProcessNetMap(t *testing.T) {
 		},
 		"app": {
 			"CNAME": {"self.example.com.", "peer.example.com."},
+		},
+		"vip-service": {
+			"A":    {"100.0.0.5"},
+			"AAAA": {"fd7a:115c:a1e0::5"},
 		},
 	}
 

@@ -3,6 +3,7 @@ package tailscale
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -87,15 +88,14 @@ func (t *Tailscale) watchIPNBus() {
 				watcher.Close()
 				break
 			}
-			t.processNetMap(n.NetMap)
+			if n.NetMap != nil {
+				t.processNetMap(n.NetMap)
+			}
 		}
 	}
 }
 
 func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
-	if nm == nil {
-		return
-	}
 
 	log.Debugf("Self tags: %+v", nm.SelfNode.Tags().AsSlice())
 	nodes := []tailcfg.NodeView{nm.SelfNode}
@@ -143,6 +143,24 @@ func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
 		}
 
 		entries[hostname] = entry
+	}
+
+	// Grab service (VIP) definitions from the only place the API seems to return them accessible
+	// via the netmap.
+	for _, rec := range nm.DNS.ExtraRecords {
+		name := strings.Split(rec.Name, ".")[0]
+		ip, err := netip.ParseAddr(rec.Value)
+		if err != nil {
+			log.Errorf("Error parsing DNS extra record value \"%s\" as netip: %v", rec.Value, err)
+		}
+		if _, ok := entries[name]; !ok {
+			entries[name] = map[string][]string{}
+		}
+		if ip.Is6() {
+			entries[name]["AAAA"] = append(entries[name]["AAAA"], ip.String())
+		} else {
+			entries[name]["A"] = append(entries[name]["A"], ip.String())
+		}
 	}
 
 	t.mu.Lock()
