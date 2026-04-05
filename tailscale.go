@@ -10,7 +10,7 @@ import (
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/fall"
-	"tailscale.com/client/tailscale"
+	"tailscale.com/client/local"
 	"tailscale.com/ipn"
 	"tailscale.com/tailcfg"
 	"tailscale.com/tsnet"
@@ -25,7 +25,7 @@ type Tailscale struct {
 	authkey  string
 	hostname string
 	srv      *tsnet.Server
-	lc       *tailscale.LocalClient
+	lc       *local.Client
 
 	mu      sync.RWMutex
 	entries map[string]map[string][]string
@@ -62,7 +62,7 @@ func (t *Tailscale) start() error {
 		}
 	} else {
 		// zero value LocalClient will connect to local tailscaled
-		t.lc = &tailscale.LocalClient{}
+		t.lc = &local.Client{}
 	}
 
 	go t.watchIPNBus()
