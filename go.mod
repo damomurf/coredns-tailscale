@@ -1,6 +1,6 @@
 module github.com/damomurf/coredns-tailscale
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/coredns/caddy v1.1.4
