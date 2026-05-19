@@ -8,10 +8,10 @@ RUN apk add git make && \
 COPY . /go/src/coredns/plugin/tailscale
 
 RUN cd plugin && \
-    rm tailscale/go.mod tailscale/go.sum &&  \
     sed -i s/forward:forward/tailscale:tailscale\\nforward:forward/ /go/src/coredns/plugin.cfg && \
     cat /go/src/coredns/plugin.cfg && \
     cd .. && \
+    go mod edit -replace github.com/coredns/coredns/plugin/tailscale=./plugin/tailscale && \
     make check && \
     go build
 
