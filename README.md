@@ -13,6 +13,7 @@ This plugin for CoreDNS allows the following:
 1. Automatically serving an (arbitrary) DNS zone with each Tailscale server in your Tailnet added with A and AAAA records.
 1. Allowing CNAME records to be defined via Tailscale node tags that link logical names to Tailscale machines.
 1. Exposing [Tailscale Services](https://tailscale.com/docs/features/tailscale-services) entries
+1. Running a DNS server on the Tailscale network interface (UDP/TCP port 53)
 
 
 ## Configuration
@@ -62,7 +63,22 @@ test-machine  IN AAAA <Tailscale IPv6 Address>
 
 [Tailscale Services](https://tailscale.com/docs/features/tailscale-services) are an alternative way to expose underlying services to your Tailnet. `coredns-tailscale` will retrieve Services entries based on their name (without the Tailnet domain) and expose their corresponding `A` and `AAAA` records in the configured CoreDNS domain. 
 
+## Tailnet DNS Server
+
+The plugin can optionally run a DNS server on the Tailscale network interface listening on UDP and TCP port 53. The DNS server is disabled by default. To enable it, use `dns on`:
+
+```
+example.com:53 {
+  tailscale example.com {
+    authkey <authkey>
+    hostname <hostname>
+    dns on
+  }
+}
+```
+
+Other machines in your tailnet can query this DNS server by using its Tailscale IP address. For example, if your CoreDNS node has Tailscale IP `100.64.0.1`, other nodes can configure their DNS resolver to use `100.64.0.1:53`. (You can also easily use the IP for a split DNS configuration in Tailscale.)
+
 ## TODO
 
    * Support Tailscale API key to avoid expiring auth keys
-
