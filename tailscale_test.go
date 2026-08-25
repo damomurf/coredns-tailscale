@@ -12,6 +12,16 @@ import (
 func TestProcessNetMap(t *testing.T) {
 	ts := &Tailscale{zone: "example.com"}
 
+	svc_cap, _ := tailcfg.MarshalCapJSON(
+		&tailcfg.ServiceDetails{
+			Name: "svc:vip-service",
+			Addrs: []netip.Addr{
+				netip.MustParseAddr("100.0.0.5"),
+				netip.MustParseAddr("fd7a:115c:a1e0::5"),
+			},
+		},
+	)
+
 	self := (&tailcfg.Node{
 		ComputedName: "self",
 		Addresses: []netip.Prefix{
@@ -19,6 +29,11 @@ func TestProcessNetMap(t *testing.T) {
 			netip.MustParsePrefix("fd7a:115c:a1e0::1/128"),
 		},
 		Tags: []string{"tag:cname-app"},
+		CapMap: tailcfg.NodeCapMap{
+			"services/vip-service": {
+					svc_cap,
+			},
+		},
 	}).View()
 
 	nm := &netmap.NetworkMap{
@@ -52,18 +67,6 @@ func TestProcessNetMap(t *testing.T) {
 				},
 				Tags: []string{"tag:cname-app"},
 			}).View(),
-		},
-		DNS: tailcfg.DNSConfig{
-			ExtraRecords: []tailcfg.DNSRecord{
-				{
-					Name:  "vip-service.tail-scale.ts.net",
-					Value: "100.0.0.5",
-				},
-				{
-					Name:  "vip-service.tail-scale.ts.net",
-					Value: "fd7a:115c:a1e0::5",
-				},
-			},
 		},
 	}
 
@@ -99,6 +102,10 @@ func TestProcessNetMap(t *testing.T) {
 		},
 		"app": {
 			"CNAME": {"self.example.com."},
+		},
+		"vip-service": {
+			"A":    {"100.0.0.5"},
+			"AAAA": {"fd7a:115c:a1e0::5"},
 		},
 	}
 	if !cmp.Equal(ts.entries, want) {
