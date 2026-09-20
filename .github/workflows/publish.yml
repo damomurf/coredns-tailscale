@@ -20,11 +20,14 @@ env:
 jobs:
   build-and-push-image:
     strategy:
+      fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-    runs-on: ubuntu-latest
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
@@ -47,10 +50,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/setup-qemu-action@v4
-        with:
-          platforms: ${{ matrix.platform }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
