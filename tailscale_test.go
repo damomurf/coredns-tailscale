@@ -5,68 +5,44 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"tailscale.com/ipn/ipnstate"
 	"tailscale.com/tailcfg"
-	"tailscale.com/types/netmap"
+	"tailscale.com/types/key"
+	"tailscale.com/types/views"
 )
 
-func TestProcessNetMap(t *testing.T) {
+func TestProcessStatus(t *testing.T) {
 	ts := &Tailscale{zone: "example.com"}
 
-	svc_cap, _ := tailcfg.MarshalCapJSON(
-		&tailcfg.ServiceDetails{
-			Name: "svc:vip-service",
-			Addrs: []netip.Addr{
-				netip.MustParseAddr("100.0.0.5"),
-				netip.MustParseAddr("fd7a:115c:a1e0::5"),
+	selfTags := views.SliceOf([]string{"tag:cname-app"})
+	peerTags := views.SliceOf([]string{"tag:cname-app"})
+	sharedTags := views.SliceOf([]string{"tag:cname-app"})
+	status := &ipnstate.Status{
+		Self: &ipnstate.PeerStatus{
+			DNSName:      "self.example.ts.net.",
+			TailscaleIPs: []netip.Addr{netip.MustParseAddr("100.0.0.1"), netip.MustParseAddr("fd7a:115c:a1e0::1")},
+			Tags:         &selfTags,
+		},
+		Peer: map[key.NodePublic]*ipnstate.PeerStatus{
+			key.NewNode().Public(): {
+				DNSName:      "peer.example.ts.net.",
+				TailscaleIPs: []netip.Addr{netip.MustParseAddr("100.0.0.2"), netip.MustParseAddr("fd7a:115c:a1e0::2")},
+				Tags:         &peerTags,
+			},
+			key.NewNode().Public(): {
+				DNSName:      "shared.example.ts.net.",
+				TailscaleIPs: []netip.Addr{netip.MustParseAddr("100.0.0.3"), netip.MustParseAddr("fd7a:115c:a1e0::3")},
+				ShareeNode:   true,
+				Tags:         &sharedTags,
+			},
+			key.NewNode().Public(): {
+				TailscaleIPs: []netip.Addr{netip.MustParseAddr("100.0.0.4"), netip.MustParseAddr("fd7a:115c:a1e0::4")},
 			},
 		},
-	)
-
-	self := (&tailcfg.Node{
-		ComputedName: "self",
-		Addresses: []netip.Prefix{
-			netip.MustParsePrefix("100.0.0.1/24"),
-			netip.MustParsePrefix("fd7a:115c:a1e0::1/128"),
-		},
-		Tags: []string{"tag:cname-app"},
-		CapMap: tailcfg.NodeCapMap{
-			"services/vip-service": {
-					svc_cap,
-			},
-		},
-	}).View()
-
-	nm := &netmap.NetworkMap{
-		SelfNode: self,
-		Peers: []tailcfg.NodeView{
-			(&tailcfg.Node{
-				ComputedName: "peer",
-				Addresses: []netip.Prefix{
-					netip.MustParsePrefix("100.0.0.2/24"),
-					netip.MustParsePrefix("fd7a:115c:a1e0::2/128"),
-				},
-				Tags: []string{"tag:cname-app"},
-			}).View(),
-			(&tailcfg.Node{
-				// shared node should be excluded
-				ComputedName: "shared",
-				Sharer:       1,
-				Addresses: []netip.Prefix{
-					netip.MustParsePrefix("100.0.0.3/24"),
-					netip.MustParsePrefix("fd7a:115c:a1e0::3/128"),
-				},
-				Tags: []string{"tag:cname-app"},
-			}).View(),
-			(&tailcfg.Node{
-				// mullvad exit node should be excluded
-				ComputedName:    "mullvad",
-				IsWireGuardOnly: true,
-				Addresses: []netip.Prefix{
-					netip.MustParsePrefix("100.0.0.4/24"),
-					netip.MustParsePrefix("fd7a:115c:a1e0::4/128"),
-				},
-				Tags: []string{"tag:cname-app"},
-			}).View(),
+	}
+	services := map[tailcfg.ServiceName]tailcfg.ServiceDetails{
+		"svc:vip-service": {
+			Addrs: []netip.Addr{netip.MustParseAddr("100.0.0.5"), netip.MustParseAddr("fd7a:115c:a1e0::5")},
 		},
 	}
 
@@ -88,13 +64,13 @@ func TestProcessNetMap(t *testing.T) {
 		},
 	}
 
-	ts.processNetMap(nm)
+	ts.processStatus(status, services)
 	if !cmp.Equal(ts.entries, want) {
 		t.Errorf("ts.entries = %v, want %v", ts.entries, want)
 	}
 
 	// now process another netmap with only self, and make sure peer is removed
-	ts.processNetMap(&netmap.NetworkMap{SelfNode: self})
+	status.Peer = nil
 	want = map[string]map[string][]string{
 		"self": {
 			"A":    {"100.0.0.1"},
@@ -108,6 +84,7 @@ func TestProcessNetMap(t *testing.T) {
 			"AAAA": {"fd7a:115c:a1e0::5"},
 		},
 	}
+	ts.processStatus(status, services)
 	if !cmp.Equal(ts.entries, want) {
 		t.Errorf("ts.entries = %v, want %v", ts.entries, want)
 	}
