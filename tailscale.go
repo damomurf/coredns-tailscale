@@ -11,9 +11,9 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/fall"
 	"tailscale.com/client/local"
 	"tailscale.com/ipn"
+	"tailscale.com/ipn/ipnstate"
 	"tailscale.com/tailcfg"
 	"tailscale.com/tsnet"
-	"tailscale.com/types/netmap"
 )
 
 type Tailscale struct {
@@ -68,11 +68,11 @@ func (t *Tailscale) start() error {
 	return nil
 }
 
-// watchIPNBus watches the Tailscale IPN Bus and updates DNS entries for any netmap update.
+// watchIPNBus watches the Tailscale IPN Bus and refreshes DNS entries when node state changes.
 // This function does not return. If it is unable to read from the IPN Bus, it will continue to retry.
 func (t *Tailscale) watchIPNBus() {
 	for {
-		watcher, err := t.lc.WatchIPNBus(context.Background(), ipn.NotifyInitialNetMap|ipn.NotifyNoPrivateKeys)
+		watcher, err := t.lc.WatchIPNBus(context.Background(), ipn.NotifyInitialStatus|ipn.NotifyPeerChanges|ipn.NotifyNoPrivateKeys)
 		if err != nil {
 			log.Info("unable to read from Tailscale event bus, retrying in 1 minute")
 			time.Sleep(1 * time.Minute)
@@ -81,47 +81,52 @@ func (t *Tailscale) watchIPNBus() {
 		defer watcher.Close()
 
 		for {
-			n, err := watcher.Next()
+			_, err := watcher.Next()
 			if err != nil {
 				// If we're unable to read, then close watcher and reconnect
 				watcher.Close()
 				break
 			}
-			if n.NetMap != nil {
-				t.processNetMap(n.NetMap)
+			status, err := t.lc.Status(context.Background())
+			if err != nil {
+				log.Infof("unable to get Tailscale status: %v", err)
+				continue
 			}
+			services, err := t.lc.GetServices(context.Background())
+			if err != nil {
+				log.Infof("unable to get Tailscale services: %v", err)
+				continue
+			}
+			t.processStatus(status, services)
 		}
 	}
 }
 
-func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
-
-	log.Debugf("Self tags: %+v", nm.SelfNode.Tags().AsSlice())
-	nodes := []tailcfg.NodeView{nm.SelfNode}
-	nodes = append(nodes, nm.Peers...)
+func (t *Tailscale) processStatus(status *ipnstate.Status, services map[tailcfg.ServiceName]tailcfg.ServiceDetails) {
+	if status == nil {
+		return
+	}
 
 	entries := map[string]map[string][]string{}
+	nodes := []*ipnstate.PeerStatus{status.Self}
+	for _, peer := range status.Peer {
+		nodes = append(nodes, peer)
+	}
+
 	for _, node := range nodes {
-		if node.IsWireGuardOnly() {
-			// IsWireGuardOnly identifies a node as a Mullvad exit node.
-			continue
-		}
-		if !node.Sharer().IsZero() {
-			// Skip shared nodes, since they don't necessarily have unique hostnames within this tailnet.
-			// TODO: possibly make it configurable to include shared nodes and figure out what hostname to use.
+		if node == nil || node.DNSName == "" || node.ShareeNode {
+			// Shared nodes may not have unique hostnames; nodes without DNS names are unresolvable.
 			continue
 		}
 
-		hostname := node.ComputedName()
+		hostname := strings.SplitN(strings.TrimSuffix(node.DNSName, "."), ".", 2)[0]
 		entry, ok := entries[hostname]
 		if !ok {
 			entry = map[string][]string{}
 		}
 
 		// Currently entry["A"/"AAAA"] will have max one element
-		for _, pfx := range node.Addresses().AsSlice() {
-
-			addr := pfx.Addr()
+		for _, addr := range node.TailscaleIPs {
 			if addr.Is4() {
 				entry["A"] = append(entry["A"], addr.String())
 			} else if addr.Is6() {
@@ -130,8 +135,8 @@ func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
 		}
 
 		// Process Tags looking for cname- prefixed ones
-		if node.Tags().Len() > 0 {
-			for _, raw := range node.Tags().AsSlice() {
+		if node.Tags != nil {
+			for _, raw := range node.Tags.AsSlice() {
 				if tag, ok := strings.CutPrefix(raw, "tag:cname-"); ok {
 					if _, ok := entries[tag]; !ok {
 						entries[tag] = map[string][]string{}
@@ -145,8 +150,8 @@ func (t *Tailscale) processNetMap(nm *netmap.NetworkMap) {
 	}
 
 	// Grab service (VIP) definitions
-	for _, svc := range nm.Services() {
-		name := svc.Name.WithoutPrefix()
+	for serviceName, svc := range services {
+		name := serviceName.WithoutPrefix()
 		if _, ok := entries[name]; !ok {
 			entries[name] = map[string][]string{}
 		}
