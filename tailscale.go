@@ -74,11 +74,10 @@ func (t *Tailscale) watchIPNBus() {
 	for {
 		watcher, err := t.lc.WatchIPNBus(context.Background(), ipn.NotifyInitialStatus|ipn.NotifyPeerChanges|ipn.NotifyNoPrivateKeys)
 		if err != nil {
-			log.Info("unable to read from Tailscale event bus, retrying in 1 minute")
+			log.Infof("unable to read from Tailscale event bus, retrying in 1 minute: %v", err)
 			time.Sleep(1 * time.Minute)
 			continue
 		}
-		defer watcher.Close()
 
 		for {
 			_, err := watcher.Next()
@@ -94,8 +93,9 @@ func (t *Tailscale) watchIPNBus() {
 			}
 			services, err := t.lc.GetServices(context.Background())
 			if err != nil {
-				log.Infof("unable to get Tailscale services: %v", err)
-				continue
+				// Services are optional (e.g. no netmap yet on a fresh tsnet node); still publish nodes.
+				log.Debugf("unable to get Tailscale services: %v", err)
+				services = nil
 			}
 			t.processStatus(status, services)
 		}
