@@ -1,13 +1,13 @@
 module github.com/damomurf/coredns-tailscale
 
-go 1.27.1
+go 1.27.3
 
 require (
 	github.com/coredns/caddy v1.1.4
 	github.com/coredns/coredns v1.14.7
 	github.com/google/go-cmp v0.7.0
 	github.com/miekg/dns v1.1.73
-	tailscale.com v1.104.0
+	tailscale.com v1.104.2
 )
 
 require (
